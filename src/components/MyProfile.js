@@ -1,89 +1,71 @@
-import React, { useState } from 'react';
-import { setupContractInteraction } from './contractInteraction';
-import { getPermit } from 'fhenixjs';
+import React, { useState, useEffect } from 'react';
+import { ethers } from 'ethers';
+import { FhenixClient, getPermit } from 'fhenixjs';
+import abi from '../utils/abi.json';
 
-const MyProfile = () => {
-  const [profileData, setProfileData] = useState(null);
+const ProfileComponent = () => {
+  const [profile, setProfile] = useState({ age: null, location: null });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const handleViewProfile = async (address) => {
-    try {
-      console.log('Setting up contract interaction...');
-      const { contract, fhenixClient, signer } = await setupContractInteraction();
-  
-      if (!contract || !fhenixClient || !signer) {
-        throw new Error('Failed to set up contract interaction');
-      }
-      console.log('Contract interaction setup complete:', { contract, fhenixClient, signer });
-  
-      console.log('Getting permit...');
-      const permit = await getPermit(contract.address, signer);
-      if (!permit) {
-        throw new Error('Failed to obtain permit');
-      }
-      console.log('Permit obtained:', permit);
-  
-      console.log('Storing permit in fhenixClient...');
+  // Define contract address and ABI
+  const contractAddress = "0x74c519920DC905C64C598800deAfAA22918D9f34";
+
+  useEffect(() => {
+    const fetchProfile = async () => {
       try {
-        fhenixClient.storePermit(permit);
-      } catch (storeError) {
-        throw new Error('Error storing permit: ' + storeError.message);
+        // Initialize provider and signer
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const signer = await provider.getSigner();
+        
+        // Initialize Fhenix client
+        const client = new FhenixClient({ provider });
+
+        // Generate permit and extract permission
+        const permit = await getPermit(contractAddress, provider);
+        client.storePermit(permit);
+        const permission = client.extractPermitPermission(permit);
+
+        // Initialize contract
+        const contract = new ethers.Contract(contractAddress, abi, signer);
+
+        // Get user address
+        const userAddress = await signer.getAddress();
+
+        // Fetch and decrypt profile
+        const [sealedAge, sealedLocation] = await contract.getProfileSealed(userAddress, permission);
+        console.log('Sealed Age:', sealedAge);
+        console.log('Sealed Location:', sealedLocation);
+
+        const age = await client.unseal(contractAddress, sealedAge);
+        const location = await client.unseal(contractAddress, sealedLocation);
+
+        console.log('Decrypted Age:', age);
+        console.log('Decrypted Location:', location);
+
+        // Convert BigInt to string
+        setProfile({ age: age.toString(), location: location.toString() });
+      } catch (err) {
+        console.error('Error fetching profile:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
       }
-  
-      console.log('Extracting permit permission...');
-      const permission = fhenixClient.extractPermitPermission(permit);
-      if (!permission) {
-        throw new Error('Failed to extract permission from permit');
-      }
-      console.log('Permission extracted:', permission);
-  
-      console.log('Fetching encrypted profile data...');
-      const [encryptedAge, encryptedGender, encryptedLocation] = await contract.getProfileSealed(address, permission);
-      if (!encryptedAge || !encryptedGender || !encryptedLocation) {
-        throw new Error('Failed to fetch encrypted profile data');
-      }
-      console.log('Encrypted data received:', { encryptedAge, encryptedGender, encryptedLocation });
-  
-      console.log('Unsealing age...');
-      const age = await fhenixClient.unseal(contract.address, encryptedAge);
-      if (!age) {
-        throw new Error('Failed to unseal age');
-      }
-      console.log('Unsealed age:', age);
-  
-      console.log('Unsealing gender...');
-      const gender = await fhenixClient.unseal(contract.address, encryptedGender);
-      if (!gender) {
-        throw new Error('Failed to unseal gender');
-      }
-      console.log('Unsealed gender:', gender);
-  
-      console.log('Unsealing location...');
-      const location = await fhenixClient.unseal(contract.address, encryptedLocation);
-      if (!location) {
-        throw new Error('Failed to unseal location');
-      }
-      console.log('Unsealed location:', location);
-  
-      setProfileData({ age, gender, location });
-    } catch (error) {
-      console.error('Error viewing profile:', error);
-    }
-  };
-  
+    };
+
+    fetchProfile();
+  }, [contractAddress, abi]);
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
 
   return (
     <div>
-      <h2>View Profile</h2>
-      <button onClick={() => handleViewProfile('USER_ADDRESS')}>View Profile</button>
-      {profileData && (
-        <div>
-          <p>Age: {profileData.age}</p>
-          <p>Gender: {profileData.gender}</p>
-          <p>Location: {profileData.location}</p>
-        </div>
-      )}
+      <h2>User Profile</h2>
+      <p>Age: {profile.age}</p>
+      <p>Location: {profile.location}</p>
     </div>
   );
 };
 
-export default MyProfile;
+export default ProfileComponent;
