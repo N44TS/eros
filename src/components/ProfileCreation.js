@@ -49,7 +49,6 @@ const ProfileCreation = ({ setProfileStep, setIsSubmitting, hasProfile, profileS
 
       // Listen for NewMatch events
       contract.on("NewMatch", (user1, user2, event) => {
-        console.log(`New match event received: ${user1} and ${user2}`);
         if (user1 === address || user2 === address) {
           console.log('Match involves current user, updating matches state');
           setMatches(prevMatches => [...prevMatches, { user1, user2 }]);
@@ -109,7 +108,7 @@ const ProfileCreation = ({ setProfileStep, setIsSubmitting, hasProfile, profileS
         const userProfile = await getUserProfile();
         console.log('Raw unsealed profile data:', userProfile);
         setProfile(userProfile);
-        // TODO: Fetch matches
+       
       }
     } catch (error) {
       console.error('Error checking profile:', error);
