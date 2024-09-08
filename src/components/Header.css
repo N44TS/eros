@@ -1,0 +1,20 @@
+.eros-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background-color: rgba(10, 10, 31, 0.8);
+    padding: 10px 0;
+    z-index: 1000;
+  }
+  
+  .eros-logo {
+    font-family: 'Special Elite', cursive;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #ff00ff;
+    text-shadow: 0 0 15px #ff00ff;
+    text-align: center;
+    letter-spacing: 4px;
+    margin: 0;
+  }

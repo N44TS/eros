@@ -1,0 +1,118 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Special+Elite&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Special+Elite&display=swap');
+
+
+body {
+  font-family: 'Orbitron', sans-serif;
+  background-color: #0a0a1f;
+  color: #00ffff;
+  background-image: 
+    radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 40px),
+    radial-gradient(white, rgba(255,255,255,.15) 1px, transparent 30px),
+    radial-gradient(white, rgba(255,255,255,.1) 2px, transparent 40px),
+    radial-gradient(rgba(255,255,255,.4), rgba(255,255,255,.1) 2px, transparent 30px);
+  background-size: 550px 550px, 350px 350px, 250px 250px, 150px 150px;
+  background-position: 0 0, 40px 60px, 130px 270px, 70px 100px;
+}
+
+.fhenix-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.fhenix-logo {
+    font-family: 'Special Elite', cursive;
+    font-size: 4rem;
+    font-weight: 700;
+    color: #ff00ff;
+    text-shadow: 0 0 15px #ff00ff;
+    margin-bottom: 20px;
+    text-align: center;
+    letter-spacing: 4px;
+  }
+  
+  .fhenix-title {
+    font-family: 'Special Elite', cursive;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #00ffff;
+    text-shadow: 0 0 10px #00ffff;
+    margin-bottom: 20px;
+    text-align: center;
+    letter-spacing: 2px;
+  }
+
+  
+.fhenix-subtitle {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 15px;
+  color: #00ffff;
+  text-shadow: 0 0 5px #00ffff;
+}
+
+.fhenix-card {
+  background-color: rgba(0, 0, 0, 0.7);
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+  border: 1px solid #00ffff;
+}
+
+.fhenix-input, .fhenix-select, .fhenix-button, .fhenix-list-item, p {
+  font-family: 'Orbitron', sans-serif;
+  color: #00ffff;
+}
+
+.fhenix-input, .fhenix-select {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  border: 1px solid #00ffff;
+  border-radius: 4px;
+  font-size: 1rem;
+  background-color: rgba(0, 0, 0, 0.5);
+  height: 40px; /* Set a fixed height for all inputs and selects */
+  box-sizing: border-box; /* Include padding and border in the element's total width and height */
+}
+
+.fhenix-select {
+  appearance: none; /* Remove default arrow */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2300ffff'%3E%3Cpath d='M10.293 3.293 6 7.586 1.707 3.293A1 1 0 0 0 .293 4.707l5 5a1 1 0 0 0 1.414 0l5-5a1 1 0 1 0-1.414-1.414z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 30px; /* Make room for custom arrow */
+}
+
+.fhenix-button {
+  width: 100%; /* Make button full width */
+  margin-top: 10px; /* Add some space above the button */
+  background-color: #ff00ff;
+  color: #0a0a1f;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.fhenix-button:hover {
+  background-color: #00ffff;
+  box-shadow: 0 0 20px #00ffff;
+}
+
+.fhenix-list {
+  list-style-type: none;
+  padding: 0;
+}
+
+.fhenix-list-item {
+  padding: 10px 0;
+  border-bottom: 1px solid #00ffff;
+}

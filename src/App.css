@@ -69,3 +69,50 @@ button {
 .gender-preference select {
   width: 100%;
 }
+
+.chaos-button {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-5deg);
+  font-family: 'Special Elite', cursive;
+  font-size: 2.5rem;
+  font-weight: bold;
+  padding: 20px 40px;
+  background-color: #ff00ff;
+  color: #0a0a1f;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 20px #ff00ff, 0 0 40px #ff00ff, 0 0 60px #ff00ff;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.chaos-button:hover {
+  transform: translate(-50%, -50%) rotate(5deg) scale(1.1);
+  background-color: #00ffff;
+  color: #0a0a1f;
+  box-shadow: 0 0 30px #00ffff, 0 0 60px #00ffff, 0 0 90px #00ffff;
+}
+
+.chaos-button:active {
+  transform: translate(-50%, -50%) rotate(0deg) scale(0.95);
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 20px #ff00ff, 0 0 40px #ff00ff;
+  }
+  50% {
+    box-shadow: 0 0 30px #ff00ff, 0 0 60px #ff00ff, 0 0 90px #ff00ff;
+  }
+  100% {
+    box-shadow: 0 0 20px #ff00ff, 0 0 40px #ff00ff;
+  }
+}
+
+.chaos-button {
+  animation: pulse 2s infinite;
+}

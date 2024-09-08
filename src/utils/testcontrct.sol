@@ -4,50 +4,38 @@ pragma solidity >=0.8.13 <0.9.0;
 import "@fhenixprotocol/contracts/FHE.sol";
 import {Permissioned, Permission} from "@fhenixprotocol/contracts/access/Permissioned.sol";
 
-contract Eros1 is Permissioned {
+contract ErosTest is Permissioned {
     struct Profile {
         euint8 age;
         euint8 location; // Simplified: just continents
-        euint8 gender;
-        euint8 genderPreference;
     }
 
     mapping(address => Profile) private profiles;
     mapping(address => mapping(address => bool)) private matches;
     address[] private userAddresses;
-    mapping(address => bool) private hasProfile;
 
     event ProfileCreated(address indexed user);
     event NewMatch(address indexed user1, address indexed user2);
 
     function setProfile(
         inEuint8 calldata encryptedAge,
-        inEuint8 calldata encryptedLocation,
-        inEuint8 calldata encryptedGender,
-        inEuint8 calldata encryptedGenderPreference
+        inEuint8 calldata encryptedLocation
     ) public {
         profiles[msg.sender] = Profile({
             age: FHE.asEuint8(encryptedAge),
-            location: FHE.asEuint8(encryptedLocation),
-            gender: FHE.asEuint8(encryptedGender),
-            genderPreference: FHE.asEuint8(encryptedGenderPreference)
+            location: FHE.asEuint8(encryptedLocation)
         });
-        if (!hasProfile[msg.sender]) {
-            userAddresses.push(msg.sender);
-            hasProfile[msg.sender] = true;
-        }
+        userAddresses.push(msg.sender);
         emit ProfileCreated(msg.sender);
         findMatchesForUser(msg.sender);
     }
 
-    function getProfileSealed(address user, Permission memory permission) public view returns (string memory, string memory, string memory, string memory) {
+    function getProfileSealed(address user, Permission memory permission) public view returns (string memory, string memory) {
         require(matches[msg.sender][user] || matches[user][msg.sender] || msg.sender == user, "No match exists or not the owner");
         Profile storage profile = profiles[user];
         return (
             FHE.sealoutput(profile.age, permission.publicKey),
-            FHE.sealoutput(profile.location, permission.publicKey),
-            FHE.sealoutput(profile.gender, permission.publicKey),
-            FHE.sealoutput(profile.genderPreference, permission.publicKey)
+            FHE.sealoutput(profile.location, permission.publicKey)
         );
     }
 
@@ -60,15 +48,7 @@ contract Eros1 is Permissioned {
                 euint8 ageDifference = FHE.sub(userProfile.age, otherProfile.age);
                 ebool ageMatch = FHE.lte(ageDifference, FHE.asEuint8(3));
                 ebool locationMatch = FHE.eq(userProfile.location, otherProfile.location);
-                ebool genderMatch = FHE.or(
-                    FHE.eq(userProfile.genderPreference, FHE.asEuint8(3)),
-                    FHE.eq(userProfile.genderPreference, otherProfile.gender)
-                );
-                ebool otherGenderMatch = FHE.or(
-                    FHE.eq(otherProfile.genderPreference, FHE.asEuint8(3)),
-                    FHE.eq(otherProfile.genderPreference, userProfile.gender)
-                );
-                ebool isMatch = FHE.and(FHE.and(FHE.and(ageMatch, locationMatch), genderMatch), otherGenderMatch);
+                ebool isMatch = FHE.and(ageMatch, locationMatch);
                 if (FHE.decrypt(isMatch)) {
                     matches[user][otherUser] = true;
                     matches[otherUser][user] = true;
@@ -87,17 +67,4 @@ contract Eros1 is Permissioned {
     function getMatchStatus(address user1, address user2) public view returns (bool) {
         return matches[user1][user2];
     }
-
-    function hasUserProfile(address user) public view returns (bool) {
-        return hasProfile[user];
-    }
-
-   
-    function showInterest(address potentialMatch) public {
-    require(!matches[msg.sender][potentialMatch], "Already matched or shown interest");
-    matches[msg.sender][potentialMatch] = true;
-    if (matches[potentialMatch][msg.sender]) {
-        emit NewMatch(msg.sender, potentialMatch);
-    }
-}
 }

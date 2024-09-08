@@ -1,178 +1,276 @@
-import React, { useState, useCallback } from 'react';
-import { setupContractInteraction } from './contractInteraction';
-import { EncryptionTypes } from 'fhenixjs';
-import { ethers } from 'ethers';
+import React, { useState, useEffect } from 'react';
+import { checkExistingProfile, getUserProfile, setUserProfile, findMatches, setupContractInteraction } from './contractInteraction';
+import './ProfileCreation.css'; 
 
-//inputs
 const GENDER_OPTIONS = [
-  { value: 1, label: 'Male' },
-  { value: 2, label: 'Female' },
-  { value: 3, label: 'Non-binary' }
+  { value: '0', label: 'Male' },
+  { value: '1', label: 'Female' },
+  { value: '2', label: 'Other' }
 ];
 
 const CONTINENT_OPTIONS = [
-  { value: 1, label: 'Africa' },
-  { value: 2, label: 'Asia' },
-  { value: 3, label: 'Australasia' },
-  { value: 4, label: 'Middle East' },
-  { value: 5, label: 'Europe' },
-  { value: 6, label: 'North America' },
-  { value: 7, label: 'South America' }
+  { value: '0', label: 'Africa' },
+  { value: '1', label: 'America' },
+  { value: '2', label: 'Asia' },
+  { value: '3', label: 'Australasia' },
+  { value: '4', label: 'Europe' },
+  { value: '5', label: 'Latin America' },
+  { value: '6', label: 'Middle East' }
 ];
-
-const MAX_PREFERENCE_LENGTH = 32; // Maximum character length of preference input
 
 const GENDER_PREFERENCE_OPTIONS = [
-  { value: 1, label: 'Males' },
-  { value: 2, label: 'Females' },
-  { value: 3, label: 'Both' }
+  { value: '0', label: 'Male' },
+  { value: '1', label: 'Female' },
+  { value: '2', label: 'Both' }
 ];
 
-const ProfileCreation = ({ setProfileStep }) => {
-  const [step, setStep] = useState(1);
+const ProfileCreation = ({ setProfileStep, setIsSubmitting, hasProfile, profileStep, isSubmitting }) => {
   const [age, setAge] = useState('');
   const [gender, setGender] = useState('');
-  const [continent, setContinent] = useState('');
-  const [preferences, setPreferences] = useState(['', '', '']);
+  const [location, setLocation] = useState('');
   const [genderPreference, setGenderPreference] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [profile, setProfile] = useState(null);
+  const [matches, setMatches] = useState([]);
+  const [userAddress, setUserAddress] = useState('');
+  const [formStep, setFormStep] = useState(1);
+  const [weirdThing1, setWeirdThing1] = useState('');
+  const [weirdThing2, setWeirdThing2] = useState('');
+  const [weirdThing3, setWeirdThing3] = useState('');
 
-  const handlePreferenceChange = useCallback((index, value) => {
-    if (value.length > MAX_PREFERENCE_LENGTH) {
-      setErrorMessage(`Preference ${index + 1} exceeds the maximum allowed length of ${MAX_PREFERENCE_LENGTH} characters.`);
-      return;
-    }
-    setErrorMessage('');
-    setPreferences(prev => prev.map((pref, i) => i === index ? value : pref));
+  useEffect(() => {
+    console.log("ProfileCreation: isSubmitting changed to", isSubmitting);
+  }, [isSubmitting]);
+
+  useEffect(() => {
+    console.log("ProfileCreation: profileStep changed to", profileStep);
+  }, [profileStep]);
+
+  useEffect(() => {
+    const getUserAddress = async () => {
+      const { signer } = await setupContractInteraction();
+      const address = await signer.getAddress();
+      setUserAddress(address);
+    };
+
+    getUserAddress();
   }, []);
 
-  const handleNextStep = () => {
-    if (age && gender && continent) {
-      setStep(2);
-      setProfileStep(2);
-    } else {
-      setErrorMessage('Please fill in all fields');
-    }
-  };
+  useEffect(() => {
+    checkProfile();
+  }, []);
 
-  const handleSetProfile = async () => {
-    if (!genderPreference) {
-      setErrorMessage('Please select a gender preference');
-      return;
-    }
+  useEffect(() => {
+    console.log("ProfileCreation: Header text updated to", getHeaderText());
+  }, [isSubmitting, profileStep]);
 
+  const checkProfile = async () => {
     setIsLoading(true);
     try {
-      console.log('Setting up contract interaction...');
-      const { contract, fhenixClient, signer } = await setupContractInteraction();
-
-      if (!contract || !fhenixClient || !signer) {
-        throw new Error('Failed to set up contract interaction');
+      const hasProfile = await checkExistingProfile();
+      if (hasProfile) {
+        const userProfile = await getUserProfile();
+        console.log('Raw unsealed profile data:', userProfile);
+        setProfile(userProfile);
+        // TODO: Fetch matches
       }
-      console.log('Contract interaction setup complete:', { contract, fhenixClient, signer });
-
-      console.log('Encrypting age...');
-      const encryptedAge = await fhenixClient.encrypt(Number(age), EncryptionTypes.uint8);
-      console.log('Encrypting gender...');
-      const encryptedGender = await fhenixClient.encrypt(Number(gender), EncryptionTypes.uint8);
-      console.log('Encrypting continent...');
-      const encryptedContinent = await fhenixClient.encrypt(Number(continent), EncryptionTypes.uint32);
-
-      console.log('Encrypting preferences...');
-      const encryptedPreferences = await Promise.all([
-        ...preferences.map(async (pref) => {
-          const prefAsNumber = preferenceToNumber(pref);
-          return await fhenixClient.encrypt(prefAsNumber, EncryptionTypes.uint256);
-        }),
-        fhenixClient.encrypt(Number(genderPreference), EncryptionTypes.uint256)
-      ]);
-
-      console.log('Sending transaction to set profile...');
-      const tx = await contract.setProfile(encryptedAge, encryptedGender, encryptedContinent, encryptedPreferences);
-      console.log('Waiting for transaction confirmation...');
-      await tx.wait();
-      console.log('Profile set successfully');
-      // Here we'll add logic to move to the next step (matching or profile view)
     } catch (error) {
-      console.error('Error setting profile:', error);
-      setErrorMessage('Failed to set profile. Please try again.');
+      console.error('Error checking profile:', error);
+      setErrorMessage('Failed to check profile. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Helper function to convert preference string to number
-  const preferenceToNumber = (preference) => {
-    const bytes = ethers.toUtf8Bytes(preference.padEnd(32, '\0'));
-    return Number(ethers.toBigInt(bytes));
+  const handleSetProfile = async () => {
+    console.log("ProfileCreation: Starting profile submission");
+    setIsSubmitting(true);
+    try {
+      const genderValue = GENDER_OPTIONS.findIndex(option => option.value === gender);
+      const locationValue = CONTINENT_OPTIONS.findIndex(option => option.value === location);
+      const genderPrefValue = GENDER_PREFERENCE_OPTIONS.findIndex(option => option.value === genderPreference);
+
+      console.log('Sending to contract:', { age, genderValue, locationValue, genderPrefValue });
+
+      setIsLoading(true);
+      try {
+        const success = await setUserProfile(age, genderValue, locationValue, genderPrefValue);
+        if (success) {
+          const userProfile = await getUserProfile();
+          setProfile(userProfile);
+          
+          // Find matches after setting the profile
+          const newMatches = await findMatches();
+          console.log('New matches found:', newMatches);
+          setMatches(newMatches);
+          
+          setProfileStep(2); // Move to the next step (matches view)
+        } else {
+          setErrorMessage('Failed to set profile. Please try again.');
+        }
+      } catch (error) {
+        console.error('Error setting profile:', error);
+        setErrorMessage('An error occurred while setting your profile. Please try again.');
+      } finally {
+        console.log("ProfileCreation: Ending profile submission");
+        setIsSubmitting(false);
+      }
+    } catch (error) {
+      console.error('Error setting profile:', error);
+      setErrorMessage('An error occurred while setting your profile. Please try again.');
+    } finally {
+      setIsLoading(false);
+      setIsSubmitting(false);
+    }
   };
 
-  const renderBasicInfo = () => (
-    <div>
-      <input 
-        type="number" 
-        value={age} 
-        onChange={(e) => setAge(e.target.value)} 
-        placeholder="Age" 
-      />
-      <select 
-        value={gender} 
-        onChange={(e) => setGender(e.target.value)}
-      >
-        <option value="">Select Gender</option>
-        {GENDER_OPTIONS.map(({ value, label }) => (
-          <option key={value} value={value}>{label}</option>
-        ))}
-      </select>
-      <select 
-        value={continent} 
-        onChange={(e) => setContinent(e.target.value)}
-      >
-        <option value="">Location</option>
-        {CONTINENT_OPTIONS.map(({ value, label }) => (
-          <option key={value} value={value}>{label}</option>
-        ))}
-      </select>
-      <button onClick={handleNextStep}>Next</button>
-    </div>
-  );
+  const handleNextStep = () => {
+    setFormStep(2);
+    setProfileStep(2);
+  };
 
-  const renderPreferences = () => (
-    <div>
-      <p>These will be encrypted and kept totally private. Only you can see them unless you choose to share with your match</p>
-      {preferences.map((pref, index) => (
-        <input
-          key={index}
-          type="text"
-          maxLength={MAX_PREFERENCE_LENGTH}
-          value={pref}
-          onChange={(e) => handlePreferenceChange(index, e.target.value)}
-          placeholder={`1 thing about me (e.g., 'I hate hiking' or 'obsessed with eggs')`}
-        />
-      ))}
-      <div className="gender-preference">
-        <label htmlFor="gender-preference">I like:</label>
-        <select 
-          id="gender-preference"
-          value={genderPreference} 
-          onChange={(e) => setGenderPreference(e.target.value)}
-        >
-          <option value="">Select Preferred Gender</option>
-          {GENDER_PREFERENCE_OPTIONS.map(({ value, label }) => (
-            <option key={value} value={value}>{label}</option>
-          ))}
-        </select>
+  const getHeaderText = () => {
+    if (isSubmitting) {
+      console.log("ProfileCreation: Returning 'looking for your perfect match'");
+      return "looking for your perfect match";
+    }
+    if (profileStep === 1) {
+      return "hey you... just need the basics for now";
+    }
+    return "say something weird, noone will know, not even us!";
+  };
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (profile) {
+    console.log('Displaying profile:', profile);
+    const locationNames = ['Africa', 'America', 'Asia', 'Australasia', 'Europe', 'Latin America', 'Middle East'];
+    const genderNames = ['Male', 'Female', 'Other'];
+    const genderPrefNames = ['Male', 'Female', 'Both'];
+
+    return (
+      <div>
+        <h2>Your Profile</h2>
+        <p>Age: {profile.age}</p>
+        <p>Gender: {genderNames[Number(profile.gender)] || `Unknown (${profile.gender})`}</p>
+        <p>Location: {locationNames[Number(profile.location)] || `Unknown (${profile.location})`}</p>
+        <p>Gender Preference: {genderPrefNames[Number(profile.genderPreference)] || `Unknown (${profile.genderPreference})`}</p>
+        
+        <h2>Your Matches:</h2>
+        {matches.length > 0 ? (
+          <ul>
+            {matches.map((match, index) => (
+              <li key={index}>
+                Match with: {match.user1 === userAddress ? match.user2 : match.user1}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p>No matches found yet.</p>
+        )}
       </div>
-      <button onClick={handleSetProfile}>Set Profile</button>
-    </div>
-  );
+    );
+  }
 
   return (
-    <div>
-      {step === 1 ? renderBasicInfo() : renderPreferences()}
-      {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
-      {isLoading && <p>Setting up your profile...</p>}
+    <div className="fhenix-container">
+      <h2 key={isSubmitting ? 'submitting' : 'not-submitting'} className="fhenix-title">
+        {getHeaderText()}
+      </h2>
+      {!profile ? (
+        <div className="fhenix-card">
+          {formStep === 1 ? (
+            <>
+              <input 
+                type="number" 
+                value={age} 
+                onChange={(e) => setAge(e.target.value)} 
+                placeholder="Age" 
+                className="fhenix-input"
+              />
+              <select 
+                value={gender} 
+                onChange={(e) => setGender(e.target.value)}
+                className="fhenix-select"
+              >
+                <option value="">Select Gender</option>
+                {GENDER_OPTIONS.map(({ value, label }) => (
+                  <option key={value} value={value}>{label}</option>
+                ))}
+              </select>
+              <select 
+                value={location} 
+                onChange={(e) => setLocation(e.target.value)}
+                className="fhenix-select"
+              >
+                <option value="">Select Location</option>
+                {CONTINENT_OPTIONS.map(({ value, label }) => (
+                  <option key={value} value={value}>{label}</option>
+                ))}
+              </select>
+              <button onClick={handleNextStep} className="fhenix-button">Next</button>
+            </>
+          ) : (
+            <>
+              <input 
+                type="text" 
+                value={weirdThing1}
+                onChange={(e) => setWeirdThing1(e.target.value)}
+                placeholder="What's your weird thing?" 
+                className="fhenix-input"
+              />
+              <input 
+                type="text" 
+                value={weirdThing2}
+                onChange={(e) => setWeirdThing2(e.target.value)}
+                placeholder="What's your weird thing?" 
+                className="fhenix-input"
+              />
+              <input 
+                type="text" 
+                value={weirdThing3}
+                onChange={(e) => setWeirdThing3(e.target.value)}
+                placeholder="What's your weird thing?" 
+                className="fhenix-input"
+              />
+              <select 
+                value={genderPreference} 
+                onChange={(e) => setGenderPreference(e.target.value)}
+                className="fhenix-select"
+              >
+                <option value="">Select Preferred Gender</option>
+                {GENDER_PREFERENCE_OPTIONS.map(({ value, label }) => (
+                  <option key={value} value={value}>{label}</option>
+                ))}
+              </select>
+              <button onClick={handleSetProfile} className="fhenix-button">Create Profile</button>
+            </>
+          )}
+        </div>
+      ) : (
+        <div className="fhenix-card">
+          <h2 className="fhenix-subtitle">Your Profile</h2>
+          <p>Age: {profile.age}</p>
+          <p>Gender: {GENDER_OPTIONS[Number(profile.gender)]?.label || 'Unknown'}</p>
+          <p>Location: {CONTINENT_OPTIONS[Number(profile.location)]?.label || 'Unknown'}</p>
+          <p>Gender Preference: {GENDER_PREFERENCE_OPTIONS[Number(profile.genderPreference)]?.label || 'Unknown'}</p>
+        </div>
+      )}
+      {matches.length > 0 && (
+        <div className="fhenix-card">
+          <h2 className="fhenix-subtitle">Your Matches</h2>
+          <ul className="fhenix-list">
+            {matches.map((match, index) => (
+              <li key={index} className="fhenix-list-item">
+                Match with: {match.user1 === userAddress ? match.user2 : match.user1}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 };

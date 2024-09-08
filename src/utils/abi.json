@@ -101,9 +101,46 @@
 				"internalType": "struct inEuint8",
 				"name": "encryptedLocation",
 				"type": "tuple"
+			},
+			{
+				"components": [
+					{
+						"internalType": "bytes",
+						"name": "data",
+						"type": "bytes"
+					}
+				],
+				"internalType": "struct inEuint8",
+				"name": "encryptedGender",
+				"type": "tuple"
+			},
+			{
+				"components": [
+					{
+						"internalType": "bytes",
+						"name": "data",
+						"type": "bytes"
+					}
+				],
+				"internalType": "struct inEuint8",
+				"name": "encryptedGenderPreference",
+				"type": "tuple"
 			}
 		],
 		"name": "setProfile",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "potentialMatch",
+				"type": "address"
+			}
+		],
+		"name": "showInterest",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
@@ -211,6 +248,35 @@
 				"internalType": "string",
 				"name": "",
 				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "user",
+				"type": "address"
+			}
+		],
+		"name": "hasUserProfile",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
 			}
 		],
 		"stateMutability": "view",

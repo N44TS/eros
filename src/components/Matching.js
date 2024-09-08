@@ -3,7 +3,7 @@ import { ethers } from 'ethers';
 import { FhenixClient, getPermit } from 'fhenixjs';
 import abi from '../utils/abi.json';
 
-const CONTRACT_ADDRESS = "0x74c519920DC905C64C598800deAfAA22918D9f34";
+const CONTRACT_ADDRESS = "0x93e0CB863EE9C067FD64745CDCE2d574Bc7cEFb5";
 
 function ErosDatingApp() {
     const [profile, setProfile] = useState({ age: null, location: null });
