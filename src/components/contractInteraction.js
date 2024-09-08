@@ -102,17 +102,13 @@ export const findMatches = async () => {
   try {
     console.log('Finding matches for address:', userAddress);
 
-    const permit = await getPermit(CONTRACT_ADDRESS, signer.provider);
-    fhenixClient.storePermit(permit);
-    const permission = fhenixClient.extractPermitPermission(permit);
-
-    console.log('Calling findMatchesForUser on contract');
-    const tx = await contract.findMatchesForUser(userAddress);
+    // Call findMatchesBatch with the current user's address
+    const tx = await contract.findMatchesBatch([userAddress]);
     console.log('Transaction sent:', tx.hash);
     await tx.wait();
     console.log('Transaction confirmed');
 
-    console.log('Querying for NewMatch events');
+    // Query for NewMatch events
     const filter = contract.filters.NewMatch();
     const events = await contract.queryFilter(filter);
     console.log('Events found:', events.length);

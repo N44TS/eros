@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { checkExistingProfile, getUserProfile, setUserProfile, findMatches, setupContractInteraction } from './contractInteraction';
+import { checkExistingProfile, getUserProfile, setUserProfile, setupContractInteraction } from './contractInteraction';
 import './ProfileCreation.css'; 
 
 const GENDER_OPTIONS = [
@@ -40,22 +40,58 @@ const ProfileCreation = ({ setProfileStep, setIsSubmitting, hasProfile, profileS
   const [weirdThing3, setWeirdThing3] = useState('');
 
   useEffect(() => {
+    const setupMatchListener = async () => {
+      console.log('Setting up match listener...');
+      const { contract, signer } = await setupContractInteraction();
+      const address = await signer.getAddress();
+      setUserAddress(address);
+      console.log('User address:', address);
+
+      // Listen for NewMatch events
+      contract.on("NewMatch", (user1, user2, event) => {
+        console.log(`New match event received: ${user1} and ${user2}`);
+        if (user1 === address || user2 === address) {
+          console.log('Match involves current user, updating matches state');
+          setMatches(prevMatches => [...prevMatches, { user1, user2 }]);
+        } else {
+          console.log('Match does not involve current user, ignoring');
+        }
+      });
+
+      // Query past NewMatch events
+      const filter = contract.filters.NewMatch();
+      const events = await contract.queryFilter(filter);
+      console.log('Total NewMatch events found:', events.length);
+      const userMatches = events
+        .filter(event => event.args.user1 === address || event.args.user2 === address)
+        .map(event => ({
+          user1: event.args.user1,
+          user2: event.args.user2
+        }));
+      console.log('Matches involving current user:', userMatches);
+      setMatches(userMatches);
+    };
+
+    setupMatchListener();
+
+    // Cleanup function
+    return () => {
+      const cleanupListener = async () => {
+        console.log('Cleaning up match listener...');
+        const { contract } = await setupContractInteraction();
+        contract.removeAllListeners("NewMatch");
+      };
+      cleanupListener();
+    };
+  }, []);
+
+  useEffect(() => {
     console.log("ProfileCreation: isSubmitting changed to", isSubmitting);
   }, [isSubmitting]);
 
   useEffect(() => {
     console.log("ProfileCreation: profileStep changed to", profileStep);
   }, [profileStep]);
-
-  useEffect(() => {
-    const getUserAddress = async () => {
-      const { signer } = await setupContractInteraction();
-      const address = await signer.getAddress();
-      setUserAddress(address);
-    };
-
-    getUserAddress();
-  }, []);
 
   useEffect(() => {
     checkProfile();
@@ -100,11 +136,6 @@ const ProfileCreation = ({ setProfileStep, setIsSubmitting, hasProfile, profileS
           const userProfile = await getUserProfile();
           setProfile(userProfile);
           
-          // Find matches after setting the profile
-          const newMatches = await findMatches();
-          console.log('New matches found:', newMatches);
-          setMatches(newMatches);
-          
           setProfileStep(2); // Move to the next step (matches view)
         } else {
           setErrorMessage('Failed to set profile. Please try again.');
@@ -147,6 +178,7 @@ const ProfileCreation = ({ setProfileStep, setIsSubmitting, hasProfile, profileS
 
   if (profile) {
     console.log('Displaying profile:', profile);
+    console.log('Current matches:', matches);
     const locationNames = ['Africa', 'America', 'Asia', 'Australasia', 'Europe', 'Latin America', 'Middle East'];
     const genderNames = ['Male', 'Female', 'Other'];
     const genderPrefNames = ['Male', 'Female', 'Both'];
@@ -257,18 +289,6 @@ const ProfileCreation = ({ setProfileStep, setIsSubmitting, hasProfile, profileS
           <p>Gender: {GENDER_OPTIONS[Number(profile.gender)]?.label || 'Unknown'}</p>
           <p>Location: {CONTINENT_OPTIONS[Number(profile.location)]?.label || 'Unknown'}</p>
           <p>Gender Preference: {GENDER_PREFERENCE_OPTIONS[Number(profile.genderPreference)]?.label || 'Unknown'}</p>
-        </div>
-      )}
-      {matches.length > 0 && (
-        <div className="fhenix-card">
-          <h2 className="fhenix-subtitle">Your Matches</h2>
-          <ul className="fhenix-list">
-            {matches.map((match, index) => (
-              <li key={index} className="fhenix-list-item">
-                Match with: {match.user1 === userAddress ? match.user2 : match.user1}
-              </li>
-            ))}
-          </ul>
         </div>
       )}
     </div>
