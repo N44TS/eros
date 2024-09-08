@@ -2,6 +2,8 @@
 
 ROS is a decentralized, privacy-preserving dating application built on the Fhenix protocol built for ETHonline 2024. It leverages fully homomorphic encryption (FHE) to ensure user data privacy while enabling secure matchmaking.
 
+To use please make sure you are on Fhenix testnet and have some testnet ETH in your wallet.
+
 ## Features
 
 - Encrypted profile creation

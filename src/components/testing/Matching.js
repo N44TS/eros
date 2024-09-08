@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 import { FhenixClient, getPermit } from 'fhenixjs';
-import abi from '../utils/abi.json';
+import abi from '../../utils/abi.json';
 
 const CONTRACT_ADDRESS = "0x93e0CB863EE9C067FD64745CDCE2d574Bc7cEFb5";
 

@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { setupContractInteraction } from './contractInteraction';
+import { setupContractInteraction } from '../contractInteraction';
 import { EncryptionTypes } from 'fhenixjs';
 import { ethers } from 'ethers';
 

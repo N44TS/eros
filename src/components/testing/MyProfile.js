@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 import { FhenixClient, getPermit } from 'fhenixjs';
-import abi from '../utils/abi.json';
+import abi from '../../utils/abi.json';
 
 const ProfileComponent = () => {
   const [profile, setProfile] = useState({ age: null, location: null });
