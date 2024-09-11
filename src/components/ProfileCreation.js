@@ -122,6 +122,10 @@ const ProfileCreation = ({ setProfileStep, setIsSubmitting, hasProfile, profileS
     console.log("ProfileCreation: Starting profile submission");
     setIsSubmitting(true);
     try {
+      // FOR TESTING PURPOSES ONLY - SAVE WEIRD THINGS TO LOCAL STORAGE
+      localStorage.setItem('userWeirdThings', JSON.stringify([weirdThing1, weirdThing2, weirdThing3]));
+
+      //rest of the code 
       const genderValue = GENDER_OPTIONS.findIndex(option => option.value === gender);
       const locationValue = CONTINENT_OPTIONS.findIndex(option => option.value === location);
       const genderPrefValue = GENDER_PREFERENCE_OPTIONS.findIndex(option => option.value === genderPreference);

@@ -127,3 +127,39 @@ export const findMatches = async () => {
     return [];
   }
 };
+
+export const getMatchedUserProfile = async (matchedUserAddress) => {
+  const { contract, fhenixClient, signer } = await setupContractInteraction();
+  const currentUserAddress = await signer.getAddress();
+
+  try {
+    // Check if there's a match between the current user and the profile we're trying to fetch
+    const isMatch = await contract.getMatchStatus(currentUserAddress, matchedUserAddress);
+    
+    if (!isMatch) {
+      console.error('No match found for this profile');
+      return null;
+    }
+
+    const permit = await getPermit(CONTRACT_ADDRESS, signer.provider);
+    fhenixClient.storePermit(permit);
+    const permission = fhenixClient.extractPermitPermission(permit);
+
+    const [sealedAge, sealedLocation, sealedGender, sealedGenderPreference] = await contract.getProfileSealed(matchedUserAddress, permission);
+    
+    const age = await fhenixClient.unseal(CONTRACT_ADDRESS, sealedAge);
+    const location = await fhenixClient.unseal(CONTRACT_ADDRESS, sealedLocation);
+    const gender = await fhenixClient.unseal(CONTRACT_ADDRESS, sealedGender);
+    const genderPreference = await fhenixClient.unseal(CONTRACT_ADDRESS, sealedGenderPreference);
+
+    return { 
+      age: age.toString(), 
+      location: location.toString(),
+      gender: gender.toString(),
+      genderPreference: genderPreference.toString()
+    };
+  } catch (error) {
+    console.error('Error getting matched user profile:', error);
+    return null;
+  }
+};

@@ -1,40 +1,36 @@
 import React, { useState, useEffect } from 'react';
-import { ethers } from 'ethers';
-import { FhenixClient } from 'fhenixjs';
-import CONTRACT_ABI from '../utils/abi.json';
+import { setupContractInteraction, getMatchedUserProfile } from './contractInteraction';
 
 const Eros1Component = () => {
-  const [contract, setContract] = useState(null);
-  const [account, setAccount] = useState(null);
   const [matches, setMatches] = useState([]);
-  const [fhenixClient, setFhenixClient] = useState(null);
+  const [account, setAccount] = useState(null);
+  const [contract, setContract] = useState(null);
+  // localPreferences is used for demo purposes only
+  const [localPreferences, setLocalPreferences] = useState([]);
 
   useEffect(() => {
     const init = async () => {
-      if (window.ethereum) {
-        const provider = new ethers.BrowserProvider(window.ethereum);
-        const signer = await provider.getSigner();
+      try {
+        const { contract, signer } = await setupContractInteraction();
         const address = await signer.getAddress();
         setAccount(address);
+        setContract(contract);
 
-        const contractAddress = "0x610f8673212a39Bd10a54a3773d65626303BBcdB";
-        const eros1Contract = new ethers.Contract(contractAddress, CONTRACT_ABI, signer);
-        setContract(eros1Contract);
+        // Fetch existing matches immediately
+        await fetchExistingMatches(contract, address);
 
-        // Initialize FhenixClient
-        const client = new FhenixClient({ provider });
-        setFhenixClient(client);
-
-        // Fetch existing matches
-        await fetchExistingMatches(eros1Contract, address);
+        // Load local preferences (for demo purposes only)
+        loadLocalPreferences();
 
         // Listen for NewMatch events
-        eros1Contract.on("NewMatch", async (user1, user2, event) => {
+        contract.on("NewMatch", async (user1, user2) => {
           if (user1 === address || user2 === address) {
             console.log(`New match involving current user: ${user1} and ${user2}`);
-            await addNewMatch(user1, user2, address);
+            await addNewMatch(user1 === address ? user2 : user1);
           }
         });
+      } catch (error) {
+        console.error("Error initializing:", error);
       }
     };
 
@@ -45,87 +41,58 @@ const Eros1Component = () => {
         contract.removeAllListeners("NewMatch");
       }
     };
-  }, [account]); // Change dependency to account
+  }, []);
 
-  const fetchExistingMatches = async (contract, userAddress) => {
-    // Clear previous matches
-    setMatches([]);
+  const fetchExistingMatches = async (contractInstance, userAddress) => {
+    const filter = contractInstance.filters.NewMatch();
+    const events = await contractInstance.queryFilter(filter);
 
-    // Fetch past NewMatch events
-    const filter = contract.filters.NewMatch();
-    const events = await contract.queryFilter(filter);
-
-    // Filter events to include only those involving the current user
     const userMatches = events
       .filter(event => event.args.user1 === userAddress || event.args.user2 === userAddress)
-      .map(event => ({
-        user1: event.args.user1,
-        user2: event.args.user2
-      }));
+      .map(event => event.args.user1 === userAddress ? event.args.user2 : event.args.user1);
 
     console.log('Matches involving current user:', userMatches);
 
-    // Process events and add matches
-    for (let match of userMatches) {
-      await addNewMatch(match.user1, match.user2, userAddress);
+    for (let matchAddress of userMatches) {
+      await addNewMatch(matchAddress);
     }
   };
 
-  const addNewMatch = async (user1, user2, currentUser) => {
-    const matchAddress = user1 === currentUser ? user2 : user1;
-    const userData = await fetchUserData(matchAddress);
+  const addNewMatch = async (matchAddress) => {
+    const userData = await getMatchedUserProfile(matchAddress);
     setMatches(prevMatches => {
-      // Check if this match already exists to avoid duplicates
       if (!prevMatches.some(match => match.address === matchAddress)) {
-        console.log(`Adding new match: ${matchAddress}`);
+        console.log(`Adding new match: ${matchAddress}`, userData);
         return [...prevMatches, { address: matchAddress, userData }];
       }
       return prevMatches;
     });
   };
 
-  const fetchUserData = async (userAddress) => {
-    if (!contract || !fhenixClient) return null;
-
-    try {
-      const permission = await fhenixClient.getPermission();
-      const [ageSealedData, locationSealedData, genderSealedData, genderPreferenceSealedData] = 
-        await contract.getProfileSealed(userAddress, permission);
-
-      const age = await fhenixClient.unseal(ageSealedData);
-      const location = await fhenixClient.unseal(locationSealedData);
-      const gender = await fhenixClient.unseal(genderSealedData);
-      const genderPreference = await fhenixClient.unseal(genderPreferenceSealedData);
-
-      console.log(`Fetched user data for ${userAddress}: Age: ${age}, Location: ${location}, Gender: ${gender}, Gender Preference: ${genderPreference}`);
-
-      return { age, location, gender, genderPreference };
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-      return null;
-    }
-  };
-
   const getLocationString = (locationCode) => {
-    const locations = ["North America", "South America", "Europe", "Africa", "Asia", "Australia", "Antarctica"];
-    return locations[locationCode - 1] || "Unknown";
+    const locations = ["Africa", "America", "Asia", "Australasia", "Europe", "Latin America", "Middle East"];
+    return locations[Number(locationCode)] || "Unknown";
   };
 
   const getGenderString = (genderCode) => {
     const genders = ["Male", "Female", "Other"];
-    return genders[genderCode - 1] || "Unknown";
+    return genders[Number(genderCode)] || "Unknown";
   };
 
-  const findMatches = async () => {
-    if (contract && account) {
-      await fetchExistingMatches(contract, account);
+  // FOR TESTING ONLY! 
+  // Shoud be stored on contract not local
+  const loadLocalPreferences = () => {
+    const storedPreferences = localStorage.getItem('userWeirdThings');
+    if (storedPreferences) {
+      setLocalPreferences(JSON.parse(storedPreferences));
+    } else {
+      console.log('No local preferences found');
     }
   };
 
   return (
     <div>
       <h1>Eros1 Matching</h1>
-      <button onClick={findMatches}>Find New Matches</button>
       <h2>Your Matches:</h2>
       <ul>
         {matches.map((match, index) => (
@@ -133,14 +100,20 @@ const Eros1Component = () => {
             Match with: {match.address}
             {match.userData ? (
               <div>
-                Age: {match.userData.age}, 
-                Location: {getLocationString(match.userData.location)}, 
-                Gender: {getGenderString(match.userData.gender)}
+                Location: {getLocationString(match.userData.location) || 'Unknown'}, 
+                Gender: {getGenderString(match.userData.gender) || 'Unknown'}
               </div>
             ) : (
-              <div>Loading match data...</div>
+              <div>Unable to fetch match data. (Address: {match.address})</div>
             )}
           </li>
+        ))}
+      </ul>
+      {/* NOTE: This section is for demo purposes only */}
+      <h2>Matched Interests (Demo only):</h2>
+      <ul>
+        {localPreferences.map((pref, index) => (
+          <li key={index}>{pref}</li>
         ))}
       </ul>
     </div>

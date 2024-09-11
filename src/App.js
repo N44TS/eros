@@ -3,6 +3,7 @@ import './App.css';
 import Header from './components/Header';
 import ProfileCreation from './components/ProfileCreation';
 import { checkExistingProfile } from './components/contractInteraction';
+import Matched from './components/Matched';
 
 function App() {
   const [currentView, setCurrentView] = useState('initial');
@@ -59,6 +60,7 @@ function App() {
           />
         </div>
       )}
+      <Matched />
     </div>
   );
 }
