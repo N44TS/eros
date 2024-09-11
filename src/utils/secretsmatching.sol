@@ -7,9 +7,9 @@ import {Permissioned, Permission} from "@fhenixprotocol/contracts/access/Permiss
 contract ErosMain is Permissioned {
     struct Profile {
         euint8 age;
-        euint8 location; // 0-3 for continents
+        euint8 location; 
         euint8 gender; // 0: Male, 1: Female, 2: Other
-        euint8 preferredGender; // 0: Male, 1: Female, 2: Other, 3: Any
+        euint8 preferredGender; // 0: Male, 1: Female, 2: Other
         euint256[3] encodedPreferences; // 3 encoded and encrypted preferences
     }
 

@@ -2,9 +2,10 @@
 
 **programmable privacy matchmaking dapp**
 
-Eros is a decentralized, privacy-preserving dating application built on the Fhenix protocol built for ETHonline 2024. It leverages fully homomorphic encryption (FHE) to ensure user data privacy while enabling secure matchmaking.
+Eros is a decentralized, privacy-preserving dating app built on the Fhenix protocol built for ETHonline 2024. It uses fully homomorphic encryption (FHE) to ensure user data privacy while enabling secure matchmaking.
 
 To use please make sure you are on [Fhenix](https://www.fhenix.io/cheat-sheet/) testnet and have some testnet ETH in your wallet.
+
 
 ## Features
 
@@ -30,6 +31,15 @@ To use please make sure you are on [Fhenix](https://www.fhenix.io/cheat-sheet/) 
 3. Start the development server: `npm start`
 
 ## How It Works
+
+TL:DR;
+Key points:
+1. The matchmaking contract uses encrypted user data.
+2. It uses the Fhenix protocol for encrypted operations.
+3. Users can create profiles with encrypted age, location, gender, and preferences.
+4. The contract automatically finds matches based on compatibility.
+5. Users can view matched profiles and show interest in others.
+6. All sensitive data remains encrypted, enhancing privacy.
 
 Users can create encrypted profiles with their age, gender, location, and any other information they want to share about themselves. The smart contract performs matchmaking on this encrypted data, revealing matches only when both parties express interest.
 

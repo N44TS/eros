@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.13 <0.9.0;
 
+// import necessary fhenix contracts
 import "@fhenixprotocol/contracts/FHE.sol";
 import {Permissioned, Permission} from "@fhenixprotocol/contracts/access/Permissioned.sol";
 
@@ -12,14 +13,17 @@ contract Eros1 is Permissioned {
         euint8 genderPreference;
     }
 
+    // mappings and arrays to store user data
     mapping(address => Profile) private profiles;
     mapping(address => mapping(address => bool)) private matches;
     address[] private userAddresses;
     mapping(address => bool) private hasProfile;
 
+    // emit events to the frontend
     event ProfileCreated(address indexed user);
     event NewMatch(address indexed user1, address indexed user2);
 
+    // function to set the user's profile
     function setProfile(
         inEuint8 calldata encryptedAge,
         inEuint8 calldata encryptedLocation,
@@ -40,6 +44,7 @@ contract Eros1 is Permissioned {
         findMatchesForUser(msg.sender);
     }
 
+    // function allows decrypting and viewing a profile if permitted
     function getProfileSealed(address user, Permission memory permission) public view returns (string memory, string memory, string memory, string memory) {
         require(matches[msg.sender][user] || matches[user][msg.sender] || msg.sender == user, "No match exists or not the owner");
         Profile storage profile = profiles[user];
@@ -51,6 +56,7 @@ contract Eros1 is Permissioned {
         );
     }
 
+    // internalfunction, find matches for a user
     function findMatchesForUser(address user) internal {
         Profile storage userProfile = profiles[user];
         for (uint i = 0; i < userAddresses.length; i++) {
@@ -84,20 +90,21 @@ contract Eros1 is Permissioned {
         }
     }
 
+    // check if two users are matched function
     function getMatchStatus(address user1, address user2) public view returns (bool) {
         return matches[user1][user2];
     }
 
+    // This function checks if a user has a profile
     function hasUserProfile(address user) public view returns (bool) {
         return hasProfile[user];
     }
 
-   
+    // This function allows a user to show interest in another user to enable chat
     function showInterest(address potentialMatch) public {
     require(!matches[msg.sender][potentialMatch], "Already matched or shown interest");
     matches[msg.sender][potentialMatch] = true;
     if (matches[potentialMatch][msg.sender]) {
         emit NewMatch(msg.sender, potentialMatch);
     }
-}
-}
+}}
