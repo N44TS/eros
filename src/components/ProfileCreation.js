@@ -24,7 +24,7 @@ const GENDER_PREFERENCE_OPTIONS = [
   { value: '2', label: 'Both' }
 ];
 
-const ProfileCreation = ({ setProfileStep, setIsSubmitting, hasProfile, profileStep, isSubmitting }) => {
+const ProfileCreation = ({ setProfileStep, setIsSubmitting, hasProfile, profileStep, isSubmitting, onProfileCreated }) => {
   const [age, setAge] = useState('');
   const [gender, setGender] = useState('');
   const [location, setLocation] = useState('');
@@ -138,8 +138,8 @@ const ProfileCreation = ({ setProfileStep, setIsSubmitting, hasProfile, profileS
         if (success) {
           const userProfile = await getUserProfile();
           setProfile(userProfile);
-          
-          setProfileStep(2); // Move to the next step (matches view)
+          setProfileStep(2);
+          onProfileCreated(); 
         } else {
           setErrorMessage('Failed to set profile. Please try again.');
         }

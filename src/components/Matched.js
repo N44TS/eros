@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { setupContractInteraction, getMatchedUserProfile } from './contractInteraction';
+import Chat from './Chat'; 
 
 const Eros1Component = () => {
   const [matches, setMatches] = useState([]);
@@ -7,6 +8,7 @@ const Eros1Component = () => {
   const [contract, setContract] = useState(null);
   // localPreferences is used for demo purposes only
   const [localPreferences, setLocalPreferences] = useState([]);
+  const [selectedMatch, setSelectedMatch] = useState(null);
 
   useEffect(() => {
     const init = async () => {
@@ -90,9 +92,16 @@ const Eros1Component = () => {
     }
   };
 
+  const openChat = (match) => {
+    setSelectedMatch(match);
+  };
+
+  const closeChat = () => {
+    setSelectedMatch(null);
+  };
+
   return (
     <div>
-      <h1>Eros1 Matching</h1>
       <h2>Your Matches:</h2>
       <ul>
         {matches.map((match, index) => (
@@ -102,6 +111,14 @@ const Eros1Component = () => {
               <div>
                 Location: {getLocationString(match.userData.location) || 'Unknown'}, 
                 Gender: {getGenderString(match.userData.gender) || 'Unknown'}
+                 {/* NOTE: This section is for demo purposes only */}
+      <h2>Matched Interests (Demo only):</h2>
+      <ul>
+        {localPreferences.map((pref, index) => (
+          <li key={index}>{pref}</li>
+        ))}
+      </ul>
+                <button onClick={() => openChat(match)}>Chat</button>
               </div>
             ) : (
               <div>Unable to fetch match data. (Address: {match.address})</div>
@@ -109,13 +126,13 @@ const Eros1Component = () => {
           </li>
         ))}
       </ul>
-      {/* NOTE: This section is for demo purposes only */}
-      <h2>Matched Interests (Demo only):</h2>
-      <ul>
-        {localPreferences.map((pref, index) => (
-          <li key={index}>{pref}</li>
-        ))}
-      </ul>
+      {selectedMatch && (
+        <Chat 
+          match={selectedMatch} 
+          onClose={closeChat} 
+          onUnseal={getMatchedUserProfile} //  unseal additional data
+        />
+      )}
     </div>
   );
 };

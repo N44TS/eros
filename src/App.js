@@ -7,9 +7,9 @@ import Matched from './components/Matched';
 
 function App() {
   const [currentView, setCurrentView] = useState('initial');
+  const [hasProfile, setHasProfile] = useState(false);
   const [profileStep, setProfileStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [hasProfile, setHasProfile] = useState(false);
 
   useEffect(() => {
     const checkProfile = async () => {
@@ -18,14 +18,6 @@ function App() {
     };
     checkProfile();
   }, []);
-
-  useEffect(() => {
-    console.log("App: isSubmitting changed to", isSubmitting);
-  }, [isSubmitting]);
-
-  useEffect(() => {
-    console.log("App: profileStep changed to", profileStep);
-  }, [profileStep]);
 
   const getHeaderText = () => {
     if (isSubmitting) {
@@ -38,7 +30,7 @@ function App() {
   };
 
   const handleButtonClick = () => {
-    setCurrentView('createProfile');
+    setCurrentView(hasProfile ? 'profile' : 'createProfile');
   };
 
   return (
@@ -46,10 +38,10 @@ function App() {
       <Header />
       {currentView === 'initial' && (
         <button className="chaos-button" onClick={handleButtonClick}>
-          {hasProfile ? "Log in" : "Create Profile"}
+          {hasProfile ? "View Profile and Matches" : "Create Profile"}
         </button>
       )}
-      {currentView === 'createProfile' && (
+      {currentView === 'createProfile' && !hasProfile && (
         <div className="profile-creation-container">
           <ProfileCreation 
             setProfileStep={setProfileStep}
@@ -57,13 +49,27 @@ function App() {
             hasProfile={hasProfile}
             profileStep={profileStep}
             isSubmitting={isSubmitting}
+            onProfileCreated={() => {
+              setHasProfile(true);
+              setCurrentView('profile');
+            }}
           />
         </div>
       )}
-      <Matched />
+      {currentView === 'profile' && hasProfile && (
+        <>
+          <ProfileCreation 
+            setProfileStep={setProfileStep}
+            setIsSubmitting={setIsSubmitting}
+            hasProfile={true}
+            profileStep={profileStep}
+            isSubmitting={isSubmitting}
+          />
+          <Matched />
+        </>
+      )}
     </div>
   );
 }
 
 export default App;
-

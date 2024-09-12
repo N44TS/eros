@@ -92,9 +92,9 @@ button {
 
 .chaos-button:hover {
   transform: translate(-50%, -50%) rotate(5deg) scale(1.1);
-  background-color: #00ffff;
+  background-color: #b2e7f3;
   color: #0a0a1f;
-  box-shadow: 0 0 30px #00ffff, 0 0 60px #00ffff, 0 0 90px #00ffff;
+  box-shadow: 0 0 30px #b2e7f3, 0 0 60px #b2e7f3, 0 0 90px #b2e7f3;
 }
 
 .chaos-button:active {
