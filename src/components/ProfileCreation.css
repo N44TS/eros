@@ -16,6 +16,7 @@ body {
 }
 
 .fhenix-container {
+  min-width: 500px;
   max-width: 800px;
   margin: 0 auto;
   padding: 20px;

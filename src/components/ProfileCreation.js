@@ -85,20 +85,8 @@ const ProfileCreation = ({ setProfileStep, setIsSubmitting, hasProfile, profileS
   }, []);
 
   useEffect(() => {
-    console.log("ProfileCreation: isSubmitting changed to", isSubmitting);
-  }, [isSubmitting]);
-
-  useEffect(() => {
-    console.log("ProfileCreation: profileStep changed to", profileStep);
-  }, [profileStep]);
-
-  useEffect(() => {
     checkProfile();
   }, []);
-
-  useEffect(() => {
-    console.log("ProfileCreation: Header text updated to", getHeaderText());
-  }, [isSubmitting, profileStep]);
 
   const checkProfile = async () => {
     setIsLoading(true);
@@ -164,17 +152,6 @@ const ProfileCreation = ({ setProfileStep, setIsSubmitting, hasProfile, profileS
     setProfileStep(2);
   };
 
-  const getHeaderText = () => {
-    if (isSubmitting) {
-      console.log("ProfileCreation: Returning 'looking for your perfect match'");
-      return "looking for your perfect match";
-    }
-    if (profileStep === 1) {
-      return "hey you... just need the basics for now";
-    }
-    return "say something weird, noone will know, not even us!";
-  };
-
   if (isLoading) {
     return <div>Loading...</div>;
   }
@@ -188,7 +165,7 @@ const ProfileCreation = ({ setProfileStep, setIsSubmitting, hasProfile, profileS
 
     return (
       <div>
-        <h2>Your Profile</h2>
+        <h2 className="fhenix-subtitle">Your Profile</h2>
         <p>Age: {profile.age}</p>
         <p>Gender: {genderNames[Number(profile.gender)] || `Unknown (${profile.gender})`}</p>
         <p>Location: {locationNames[Number(profile.location)] || `Unknown (${profile.location})`}</p>
@@ -212,9 +189,6 @@ const ProfileCreation = ({ setProfileStep, setIsSubmitting, hasProfile, profileS
 
   return (
     <div className="fhenix-container">
-      <h2 key={isSubmitting ? 'submitting' : 'not-submitting'} className="fhenix-title">
-        {getHeaderText()}
-      </h2>
       {!profile ? (
         <div className="fhenix-card">
           {formStep === 1 ? (
