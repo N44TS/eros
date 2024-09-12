@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import './Chat.css';
 
 const Chat = ({ match, onClose, onUnseal }) => {
   const [unsealed, setUnsealed] = useState(false);
@@ -6,6 +7,8 @@ const Chat = ({ match, onClose, onUnseal }) => {
   const [shareAge, setShareAge] = useState(false);
   const [shareWeirdThing, setShareWeirdThing] = useState(false);
   const [weirdThings, setWeirdThings] = useState([]);
+  const [messages, setMessages] = useState([]);
+  const [inputMessage, setInputMessage] = useState('');
 
   useEffect(() => {
     // FOR TESTING Load from local
@@ -32,53 +35,77 @@ const Chat = ({ match, onClose, onUnseal }) => {
     handleUnseal();
   };
 
+  const handleSendMessage = () => {
+    if (inputMessage.trim() !== '') {
+      setMessages([...messages, { text: inputMessage, sent: true }]);
+      setInputMessage('');
+      // Here you would typically send the message to your backend or smart contract
+    }
+  };
+
   return (
-    <div className="chat-modal">
-      <h2>Chat with {match.address}</h2>
-      <button onClick={onClose}>Close</button>
-      
-      {!unsealed ? (
-        <div>
-          <h3>Choose what to share:</h3>
-          <label>
-            <input 
-              type="checkbox" 
-              checked={shareAge} 
-              onChange={() => setShareAge(!shareAge)} 
-            /> Age
-          </label>
-          <label>
-            <input 
-              type="checkbox" 
-              checked={shareWeirdThing} 
-              onChange={() => setShareWeirdThing(!shareWeirdThing)} 
-            /> Additional Interest
-          </label>
-          <button onClick={handleShare}>Share Selected Data</button>
-        </div>
-      ) : (
-        <div>
-          <h3>Shared Additional Data:</h3>
-          {shareAge && <p>Age: {additionalData?.age || 'Unknown'}</p>}
-          {shareWeirdThing && weirdThings.length > 2 && (
-            <p>Additional Interest: {weirdThings[2]}</p>
-          )}
-        </div>
-      )}
-      
-      <h3>Matched Interests:</h3>
-      <ul>
-        {weirdThings.slice(0, 2).map((thing, index) => (
-          <li key={index}>{thing}</li>
-        ))}
-      </ul>
-      
-      {/* Add chat functionality here */}
-      <div className="chat-messages">
-        {/* Display chat messages here */}
+    <div className="chat-window">
+      <div className="chat-header">
+        <h3>Chat with {match.address.slice(0, 6)}...{match.address.slice(-4)}</h3>
+        <button className="close-chat" onClick={onClose}>&times;</button>
       </div>
-      <input type="text" placeholder="Type your message..." />
-      <button>Send</button>
+      <div className="chat-content">
+        <div className="matched-interests">
+          <h3>Matched Interests:</h3>
+          <ul>
+            {weirdThings.slice(0, 2).map((thing, index) => (
+              <li key={index}>{thing}</li>
+            ))}
+          </ul>
+        </div>
+
+        {!unsealed ? (
+          <div className="share-options">
+            <h3>Choose what to share:</h3>
+            <label>
+              <input 
+                type="checkbox" 
+                checked={shareAge} 
+                onChange={() => setShareAge(!shareAge)} 
+              /> Age
+            </label>
+            <label>
+              <input 
+                type="checkbox" 
+                checked={shareWeirdThing} 
+                onChange={() => setShareWeirdThing(!shareWeirdThing)} 
+              /> Additional Interest
+            </label>
+            <button onClick={handleShare} className="share-button">Share Selected Data</button>
+          </div>
+        ) : (
+          <div className="shared-data">
+            <h3>Shared Additional Data:</h3>
+            {shareAge && <p>Age: {additionalData?.age || 'Unknown'}</p>}
+            {shareWeirdThing && weirdThings.length > 2 && (
+              <p>Additional Interest: {weirdThings[2]}</p>
+            )}
+          </div>
+        )}
+        
+        <div className="chat-messages">
+          {messages.map((message, index) => (
+            <div key={index} className={`message ${message.sent ? 'sent' : 'received'}`}>
+              {message.text}
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="chat-input">
+        <input
+          type="text"
+          value={inputMessage}
+          onChange={(e) => setInputMessage(e.target.value)}
+          placeholder="Type your message..."
+          onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+        />
+        <button onClick={handleSendMessage}>Send</button>
+      </div>
     </div>
   );
 };

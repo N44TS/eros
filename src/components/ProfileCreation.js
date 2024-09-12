@@ -164,25 +164,29 @@ const ProfileCreation = ({ setProfileStep, setIsSubmitting, hasProfile, profileS
     const genderPrefNames = ['Male', 'Female', 'Both'];
 
     return (
-      <div>
-        <h2 className="fhenix-subtitle">Your Profile</h2>
-        <p>Age: {profile.age}</p>
-        <p>Gender: {genderNames[Number(profile.gender)] || `Unknown (${profile.gender})`}</p>
-        <p>Location: {locationNames[Number(profile.location)] || `Unknown (${profile.location})`}</p>
-        <p>Gender Preference: {genderPrefNames[Number(profile.genderPreference)] || `Unknown (${profile.genderPreference})`}</p>
+      <div className="profile-container">
+        <div className="profile-box">
+          <h2>Your Profile</h2>
+          <p>Age: {profile.age}</p>
+          <p>Gender: {genderNames[Number(profile.gender)] || `Unknown (${profile.gender})`}</p>
+          <p>Location: {locationNames[Number(profile.location)] || `Unknown (${profile.location})`}</p>
+          <p>Gender Preference: {genderPrefNames[Number(profile.genderPreference)] || `Unknown (${profile.genderPreference})`}</p>
+        </div>
         
-        <h2>Your Matches:</h2>
-        {matches.length > 0 ? (
-          <ul>
-            {matches.map((match, index) => (
-              <li key={index}>
-                Match with: {match.user1 === userAddress ? match.user2 : match.user1}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p>No matches found yet.</p>
-        )}
+        {/* <div className="matches-box">
+          <h2>Your Matches:</h2>
+          {matches.length > 0 ? (
+            <ul>
+              {matches.map((match, index) => (
+                <li key={index}>
+                  Match with: {match.user1 === userAddress ? match.user2 : match.user1}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p>No matches found yet.</p>
+          )}
+        </div> */}
       </div>
     );
   }

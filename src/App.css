@@ -8,6 +8,7 @@
   background-color: #0f172a;
   color: #e2e8f0;
   font-family: 'Inter', sans-serif;
+  padding-top: 80px; /* Adjust this value based on your header height */
 }
 
 button {
@@ -115,4 +116,10 @@ button {
 
 .chaos-button {
   animation: pulse 2s infinite;
+}
+
+.subtext {
+  font-size: 1rem;
+  font-family: 'Special Elite', cursive;
+  color: #00ffff;
 }

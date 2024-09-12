@@ -117,3 +117,33 @@ body {
   padding: 10px 0;
   border-bottom: 1px solid #00ffff;
 }
+
+.profile-container {
+  padding-top: 80px; /* Adjust this value based on your header height */
+}
+
+.profile-box, .matches-box {
+  background-color: #000000;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 20px;
+  color: #ffffff;
+}
+
+.profile-box h2, .matches-box h2 {
+  color: #00ffff;
+  margin-bottom: 15px;
+}
+
+.profile-box p, .matches-box p {
+  margin: 10px 0;
+}
+
+.matches-box ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.matches-box li {
+  margin-bottom: 10px;
+}

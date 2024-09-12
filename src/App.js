@@ -26,8 +26,13 @@ function App() {
     if (profileStep === 1) {
       return "hey you... just need the basics for now";
     }
-    return "say something weird, noone will know, not even us!";
-    <p>some text about encrypoint</p>
+    return (
+      <>
+        say something weird, no-one will know, not even us!
+        <br />
+        <span className="subtext">please add your interests, hobbies, preferences, etc. All data is encrypted and kept completely private</span>
+      </>
+    );
   };
 
   const handleButtonClick = () => {
@@ -42,7 +47,7 @@ function App() {
       )}
       {currentView === 'initial' && (
         <button className="chaos-button" onClick={handleButtonClick}>
-          {hasProfile ? "View Profile and Matches" : "Create Profile"}
+          {hasProfile ? "Log In" : "Create Profile"}
         </button>
       )}
       {currentView === 'createProfile' && !hasProfile && (
