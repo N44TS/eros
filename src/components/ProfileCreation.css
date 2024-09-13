@@ -75,21 +75,21 @@ body {
   border-radius: 4px;
   font-size: 1rem;
   background-color: rgba(0, 0, 0, 0.5);
-  height: 40px; /* Set a fixed height for all inputs and selects */
-  box-sizing: border-box; /* Include padding and border in the element's total width and height */
+  height: 40px; 
+  box-sizing: border-box; 
 }
 
 .fhenix-select {
-  appearance: none; /* Remove default arrow */
+  appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2300ffff'%3E%3Cpath d='M10.293 3.293 6 7.586 1.707 3.293A1 1 0 0 0 .293 4.707l5 5a1 1 0 0 0 1.414 0l5-5a1 1 0 1 0-1.414-1.414z'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 10px center;
-  padding-right: 30px; /* Make room for custom arrow */
+  padding-right: 30px; 
 }
 
 .fhenix-button {
-  width: 100%; /* Make button full width */
-  margin-top: 10px; /* Add some space above the button */
+  width: 100%; 
+  margin-top: 10px;
   background-color: #ff00ff;
   color: #0a0a1f;
   border: none;
@@ -119,7 +119,7 @@ body {
 }
 
 .profile-container {
-  padding-top: 80px; /* Adjust this value based on your header height */
+  padding-top: 80px; 
 }
 
 .profile-box, .matches-box {

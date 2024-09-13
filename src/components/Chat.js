@@ -24,11 +24,10 @@ const Chat = ({ match, onClose, onUnseal }) => {
   const [inputMessage, setInputMessage] = useState('');
 
   useEffect(() => {
-    // FOR TESTING Load from local
-    const storedPreferences = JSON.parse(localStorage.getItem('userPreferences') || '[]');
-    setWeirdThings(storedPreferences.map(pref => PREFERENCE_OPTIONS[Number(pref)]?.label || 'Unknown'));
-  }, []);
-  // END TESTING
+    if (match.userData && match.userData.preferences) {
+      setWeirdThings(match.userData.preferences.map(pref => PREFERENCE_OPTIONS[Number(pref)]?.label || 'Unknown'));
+    }
+  }, [match.userData]);
 
   const handleUnseal = async () => {
     try {
@@ -52,7 +51,7 @@ const Chat = ({ match, onClose, onUnseal }) => {
     if (inputMessage.trim() !== '') {
       setMessages([...messages, { text: inputMessage, sent: true }]);
       setInputMessage('');
-      // Here you would typically send the message to your backend or smart contract
+      // should put xmtp here if i have time
     }
   };
 

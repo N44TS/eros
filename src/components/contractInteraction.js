@@ -1,9 +1,12 @@
 import { ethers } from 'ethers';
 import { FhenixClient, getPermit, EncryptionTypes } from 'fhenixjs';
-import CONTRACT_ABI from '../utils/abi.json';
+// import CONTRACT_ABI from '../utils/abi.json';
+// import CONTRACT_ABI from '../utils/eros2abi.json';
+import CONTRACT_ABI from '../utils/eros3abi.json';
 
-// const CONTRACT_ADDRESS = "0x610f8673212a39Bd10a54a3773d65626303BBcdB";//eros1
-const CONTRACT_ADDRESS = "0x90AAB0CC76E736F8F9b9Fde97B5B6BDd9970a39B";//eros2
+// const CONTRACT_ADDRESS = "0x90AAB0CC76E736F8F9b9Fde97B5B6BDd9970a39B";//eros1
+// const CONTRACT_ADDRESS = "0x523daeCe51B6988f18C58aE8857C96C1296Cf1D9";//eros2
+const CONTRACT_ADDRESS = "0x5C72D6B9594a71eDA76f9476134337F59037A39a";//eros3
 
 // setup contract interaction
 export const setupContractInteraction = async () => {
@@ -22,7 +25,7 @@ export const setupContractInteraction = async () => {
   }
 };
 
-// check if user has existing profile but have to get a permit to unseal first - should probably change contract to add so
+// check if user has existing profile but have to get a permit to unseal first? - should probably change contract to add so
 export const checkExistingProfile = async () => {
   const { contract, fhenixClient, signer } = await setupContractInteraction();
   const userAddress = await signer.getAddress();
@@ -40,21 +43,33 @@ export const checkExistingProfile = async () => {
   }
 };
 
-export const setUserProfile = async (age, gender, location, genderPreference, statusCallback) => {
+export const setUserProfile = async (age, gender, location, genderPreference, preferences, statusCallback) => {
   const { contract, fhenixClient } = await setupContractInteraction();
 
   try {
     statusCallback('encrypting');
-    const encryptedAge = await fhenixClient.encrypt(Number(age), EncryptionTypes.uint8);
-    const encryptedGender = await fhenixClient.encrypt(Number(gender), EncryptionTypes.uint8);
-    const encryptedLocation = await fhenixClient.encrypt(Number(location), EncryptionTypes.uint8);
-    const encryptedGenderPreference = await fhenixClient.encrypt(Number(genderPreference), EncryptionTypes.uint8);
+    const encryptedAge = await fhenixClient.encrypt_uint8(Number(age));
+    const encryptedGender = await fhenixClient.encrypt_uint8(Number(gender));
+    const encryptedLocation = await fhenixClient.encrypt_uint8(Number(location));
+    const encryptedGenderPreference = await fhenixClient.encrypt_uint8(Number(genderPreference));
+    const encryptedPreferences = await Promise.all(preferences.map(pref => 
+      fhenixClient.encrypt_uint8(Number(pref))
+    ));
 
     statusCallback('sending');
-    const tx = await contract.setProfile(encryptedAge, encryptedLocation, encryptedGender, encryptedGenderPreference);
-    
+    const tx1 = await contract.setProfilePart1(
+      encryptedAge, 
+      encryptedLocation, 
+      encryptedGender, 
+      encryptedGenderPreference,
+    );
     statusCallback('confirming');
-    await tx.wait();
+    await tx1.wait();
+
+    const tx2 = await contract.setProfilePart2(
+      encryptedPreferences,
+    );
+    await tx2.wait();
     
     statusCallback('completed');
     return true;
@@ -74,22 +89,23 @@ export const getUserProfile = async () => {
     fhenixClient.storePermit(permit);
     const permission = fhenixClient.extractPermitPermission(permit);
 
-    const [sealedAge, sealedLocation, sealedGender, sealedGenderPreference] = await contract.getProfileSealed(userAddress, permission);
+    const [sealedAge, sealedLocation, sealedGender, sealedGenderPreference] = await contract.getProfileSealedPart1(userAddress, permission);
+    const [sealedPref1, sealedPref2, sealedPref3] = await contract.getProfileSealedPart2(userAddress, permission);
     
-    console.log('Raw sealed data from contract:', { sealedAge, sealedLocation, sealedGender, sealedGenderPreference });
-
     const age = await fhenixClient.unseal(CONTRACT_ADDRESS, sealedAge);
     const location = await fhenixClient.unseal(CONTRACT_ADDRESS, sealedLocation);
     const gender = await fhenixClient.unseal(CONTRACT_ADDRESS, sealedGender);
     const genderPreference = await fhenixClient.unseal(CONTRACT_ADDRESS, sealedGenderPreference);
-
-    console.log('Decrypted profile data:', { age, location, gender, genderPreference });
+    const pref1 = await fhenixClient.unseal(CONTRACT_ADDRESS, sealedPref1);
+    const pref2 = await fhenixClient.unseal(CONTRACT_ADDRESS, sealedPref2);
+    const pref3 = await fhenixClient.unseal(CONTRACT_ADDRESS, sealedPref3);
 
     return { 
       age: age.toString(), 
       location: location.toString(),
       gender: gender.toString(),
-      genderPreference: genderPreference.toString()
+      genderPreference: genderPreference.toString(),
+      preferences: [pref1.toString(), pref2.toString(), pref3.toString()]
     };
   } catch (error) {
     console.error('Error getting user profile:', error);
@@ -98,35 +114,14 @@ export const getUserProfile = async () => {
 };
 
 export const findMatches = async () => {
-  const { contract, fhenixClient, signer } = await setupContractInteraction();
+  const { contract, signer } = await setupContractInteraction();
   const userAddress = await signer.getAddress();
-
   try {
-    console.log('Finding matches for address:', userAddress);
-
-    // Call findMatchesBatch with the current user's address
     const tx = await contract.findMatchesBatch([userAddress]);
-    console.log('Transaction sent:', tx.hash);
     await tx.wait();
-    console.log('Transaction confirmed');
-
-    // Query for NewMatch events
-    const filter = contract.filters.NewMatch();
-    const events = await contract.queryFilter(filter);
-    console.log('Events found:', events.length);
-
-    const userMatches = events
-      .filter(event => event.args.user1 === userAddress || event.args.user2 === userAddress)
-      .map(event => ({
-        user1: event.args.user1,
-        user2: event.args.user2
-      }));
-
-    console.log('Filtered matches:', userMatches);
-    return userMatches;
+    console.log("Matches found and processed");
   } catch (error) {
-    console.error('Error in findMatches:', error);
-    return [];
+    console.error("Error finding matches:", error);
   }
 };
 
@@ -135,7 +130,6 @@ export const getMatchedUserProfile = async (matchedUserAddress) => {
   const currentUserAddress = await signer.getAddress();
 
   try {
-    // Check if there's a match between the current user and the profile we're trying to fetch
     const isMatch = await contract.getMatchStatus(currentUserAddress, matchedUserAddress);
     
     if (!isMatch) {
@@ -147,18 +141,23 @@ export const getMatchedUserProfile = async (matchedUserAddress) => {
     fhenixClient.storePermit(permit);
     const permission = fhenixClient.extractPermitPermission(permit);
 
-    const [sealedAge, sealedLocation, sealedGender, sealedGenderPreference] = await contract.getProfileSealed(matchedUserAddress, permission);
+    const [sealedAge, sealedLocation, sealedGender, sealedGenderPreference] = await contract.getProfileSealedPart1(matchedUserAddress, permission);
+    const [sealedPref1, sealedPref2, sealedPref3] = await contract.getProfileSealedPart2(matchedUserAddress, permission);
     
     const age = await fhenixClient.unseal(CONTRACT_ADDRESS, sealedAge);
     const location = await fhenixClient.unseal(CONTRACT_ADDRESS, sealedLocation);
     const gender = await fhenixClient.unseal(CONTRACT_ADDRESS, sealedGender);
     const genderPreference = await fhenixClient.unseal(CONTRACT_ADDRESS, sealedGenderPreference);
+    const pref1 = await fhenixClient.unseal(CONTRACT_ADDRESS, sealedPref1);
+    const pref2 = await fhenixClient.unseal(CONTRACT_ADDRESS, sealedPref2);
+    const pref3 = await fhenixClient.unseal(CONTRACT_ADDRESS, sealedPref3);
 
     return { 
       age: age.toString(), 
       location: location.toString(),
       gender: gender.toString(),
-      genderPreference: genderPreference.toString()
+      genderPreference: genderPreference.toString(),
+      preferences: [pref1.toString(), pref2.toString(), pref3.toString()]
     };
   } catch (error) {
     console.error('Error getting matched user profile:', error);

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { setupContractInteraction, getMatchedUserProfile } from './contractInteraction';
+import { setupContractInteraction, getMatchedUserProfile, findMatches } from './contractInteraction';
 import Chat from './Chat'; 
-import './Matched.css'; // Create this file for Matched component styles
+import './Matched.css'; 
 
 const PREFERENCE_OPTIONS = [
   { value: '0', label: 'Harry Potter' },
@@ -20,7 +20,7 @@ const Eros1Component = () => {
   const [matches, setMatches] = useState([]);
   const [account, setAccount] = useState(null);
   const [contract, setContract] = useState(null);
-  // localPreferences is used for demo purposes only
+  // localPreferences is used for testing purposes only
   const [localPreferences, setLocalPreferences] = useState([]);
   const [selectedMatch, setSelectedMatch] = useState(null);
 
@@ -32,13 +32,10 @@ const Eros1Component = () => {
         setAccount(address);
         setContract(contract);
 
-        // Fetch existing matches immediately
+        // Fetch existing matches
         await fetchExistingMatches(contract, address);
 
-        // Load local preferences (for demo purposes only)
-        loadLocalPreferences();
-
-        // Listen for NewMatch events
+        // Set up event listener for new matches
         contract.on("NewMatch", async (user1, user2) => {
           if (user1 === address || user2 === address) {
             console.log(`New match involving current user: ${user1} and ${user2}`);
@@ -59,9 +56,20 @@ const Eros1Component = () => {
     };
   }, []);
 
+  useEffect(() => {
+    const fetchMatches = async () => {
+      const { contract, signer } = await setupContractInteraction();
+      const address = await signer.getAddress();
+      await fetchExistingMatches(contract, address);
+    };
+    fetchMatches();
+  }, []);
+
   const fetchExistingMatches = async (contractInstance, userAddress) => {
+    console.log("Fetching existing matches for:", userAddress);
     const filter = contractInstance.filters.NewMatch();
     const events = await contractInstance.queryFilter(filter);
+    console.log("NewMatch events:", events);
 
     const userMatches = events
       .filter(event => event.args.user1 === userAddress || event.args.user2 === userAddress)
@@ -125,8 +133,8 @@ const Eros1Component = () => {
                 <h3>{match.address.slice(0, 6)}...{match.address.slice(-4)}</h3>
                 {match.userData ? (
                   <div className="match-details">
-                    <p>Location: {getLocationString(match.userData.location) || 'Unknown'}</p>
-                    <p>Gender: {getGenderString(match.userData.gender) || 'Unknown'}</p>
+                    <p>Location: {getLocationString(match.userData.location)}</p>
+                    <p>Gender: {getGenderString(match.userData.gender)}</p>
                   </div>
                 ) : (
                   <p className="match-error">Unable to fetch match data</p>
@@ -152,15 +160,6 @@ const Eros1Component = () => {
           )}
         </div>
       </div>
-      {/* Demo section */}
-      {/* <div className="demo-preferences">
-        <h2>Matched Interests (Demo only)</h2>
-        <ul className="preferences-list">
-          {localPreferences.map((pref, index) => (
-            <li key={index}>{pref}</li>
-          ))}
-        </ul>
-      </div> */}
     </div>
   );
 };

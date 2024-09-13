@@ -87,6 +87,7 @@
     min-height: 400px;
     display: flex;
     flex-direction: column;
+    width: 400px;
   }
   
   .no-chat-selected {

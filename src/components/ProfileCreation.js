@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { checkExistingProfile, getUserProfile, setUserProfile, setupContractInteraction } from './contractInteraction';
+import { checkExistingProfile, getUserProfile, setUserProfile, setupContractInteraction, findMatches } from './contractInteraction';
 import './ProfileCreation.css'; 
 
 const GENDER_OPTIONS = [
@@ -121,28 +121,50 @@ const ProfileCreation = ({ setProfileStep, setIsSubmitting, hasProfile, profileS
     }
   };
 
-  const handleSetProfile = async () => {
-    console.log("ProfileCreation: Starting profile submission");
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     setIsSubmitting(true);
     setTransactionStatus('encrypting');
     try {
-      // Save preferences to local storage
-      localStorage.setItem('userPreferences', JSON.stringify([preference1, preference2, preference3]));
-
-      const genderValue = GENDER_OPTIONS.findIndex(option => option.value === gender);
-      const locationValue = CONTINENT_OPTIONS.findIndex(option => option.value === location);
-      const genderPrefValue = GENDER_PREFERENCE_OPTIONS.findIndex(option => option.value === genderPreference);
-
-      console.log('Sending to contract:', { age, genderValue, locationValue, genderPrefValue });
-
-      setTransactionStatus('sending');
-      const success = await setUserProfile(age, genderValue, locationValue, genderPrefValue, setTransactionStatus);
+      const success = await setUserProfile(
+        age,
+        gender,
+        location,
+        genderPreference,
+        [preference1, preference2, preference3],
+        setTransactionStatus
+      );
       if (success) {
         setTransactionStatus('completed');
-        const userProfile = await getUserProfile();
-        setProfile(userProfile);
-        setProfileStep(2);
-        onProfileCreated(); 
+        const updatedProfile = await getUserProfile();
+        setProfile(updatedProfile);
+        onProfileCreated();
+      } else {
+        setTransactionStatus('error');
+        setErrorMessage('Failed to set profile. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error creating profile:', error);
+      setTransactionStatus('error');
+      setErrorMessage('An error occurred while setting your profile. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleNextStep = () => {
+    setFormStep(2);
+    setProfileStep(2);
+  };
+
+  const handleSetProfile = async () => {
+    setIsSubmitting(true);
+    setTransactionStatus('starting');
+    try {
+      const success = await setUserProfile(age, gender, location, genderPreference, [preference1, preference2, preference3], setTransactionStatus);
+      if (success) {
+        setTransactionStatus('completed');
+        onProfileCreated();
       } else {
         setTransactionStatus('error');
         setErrorMessage('Failed to set profile. Please try again.');
@@ -152,14 +174,8 @@ const ProfileCreation = ({ setProfileStep, setIsSubmitting, hasProfile, profileS
       setTransactionStatus('error');
       setErrorMessage('An error occurred while setting your profile. Please try again.');
     } finally {
-      console.log("ProfileCreation: Ending profile submission");
       setIsSubmitting(false);
     }
-  };
-
-  const handleNextStep = () => {
-    setFormStep(2);
-    setProfileStep(2);
   };
 
   if (isLoading) {
@@ -278,7 +294,7 @@ const ProfileCreation = ({ setProfileStep, setIsSubmitting, hasProfile, profileS
                   <option key={value} value={value}>{label}</option>
                 ))}
               </select>
-              <button onClick={handleSetProfile} className="fhenix-button" disabled={isSubmitting}>
+              <button onClick={handleSubmit} className="fhenix-button" disabled={isSubmitting}>
                 Create Profile
               </button>
             </>
@@ -286,13 +302,15 @@ const ProfileCreation = ({ setProfileStep, setIsSubmitting, hasProfile, profileS
         </div>
       ) : (
         <div className="transaction-status">
-          <div className="spinner"></div>
+        <div className="spinner"></div>
+        <div className="status-message">
           {transactionStatus === 'encrypting' && <p>Encrypting your data...</p>}
           {transactionStatus === 'sending' && <p>Sending transaction to the blockchain...</p>}
-          {transactionStatus === 'confirming' && <p>Matching and Profile creation in progress... </p>}
-          {transactionStatus === 'completed' && <p>Matching and Profile created successfully!</p>}
+          {transactionStatus === 'confirming' && <p>Matching and Profile creation in progress...</p>}
+          {transactionStatus === 'completed' && <p>Profile created successfully!</p>}
           {transactionStatus === 'error' && <p>Error: {errorMessage}</p>}
         </div>
+      </div>
       )}
     </div>
   );
