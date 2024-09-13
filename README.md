@@ -6,6 +6,8 @@ Eros is a decentralized, privacy-preserving dating app built on the Fhenix proto
 
 To use please make sure you are on [Fhenix](https://www.fhenix.io/cheat-sheet/) testnet and have some testnet ETH in your wallet.
 
+View Ethonline 2024 finalist presentation [here](https://www.canva.com/design/DAGQgncVSFQ/TNX4FfEHXHQuH-LESEAfZQ/edit?utm_content=DAGQgncVSFQ&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton)
+
 
 ## Features
 
