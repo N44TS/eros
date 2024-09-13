@@ -3,6 +3,19 @@ import { setupContractInteraction, getMatchedUserProfile } from './contractInter
 import Chat from './Chat'; 
 import './Matched.css'; // Create this file for Matched component styles
 
+const PREFERENCE_OPTIONS = [
+  { value: '0', label: 'Harry Potter' },
+  { value: '1', label: 'into Crypto' },
+  { value: '2', label: 'Hate travelling' },
+  { value: '3', label: 'Vegetarian' },
+  { value: '4', label: 'Vaccinated' },
+  { value: '5', label: 'Hate reading' },
+  { value: '6', label: 'Politically left leaning' },
+  { value: '7', label: 'Politically right leaning' },
+  { value: '8', label: 'Hate fitness' },
+  { value: '9', label: 'Hate cooking' }
+];
+
 const Eros1Component = () => {
   const [matches, setMatches] = useState([]);
   const [account, setAccount] = useState(null);

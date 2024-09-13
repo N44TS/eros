@@ -1,6 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import './Chat.css';
 
+const PREFERENCE_OPTIONS = [
+  { value: '0', label: 'Harry Potter' },
+  { value: '1', label: 'into Crypto' },
+  { value: '2', label: 'Hate travelling' },
+  { value: '3', label: 'Vegetarian' },
+  { value: '4', label: 'Vaccinated' },
+  { value: '5', label: 'Hate reading' },
+  { value: '6', label: 'Politically left leaning' },
+  { value: '7', label: 'Politically right leaning' },
+  { value: '8', label: 'Hate fitness' },
+  { value: '9', label: 'Hate cooking' }
+];
+
 const Chat = ({ match, onClose, onUnseal }) => {
   const [unsealed, setUnsealed] = useState(false);
   const [additionalData, setAdditionalData] = useState(null);
@@ -12,8 +25,8 @@ const Chat = ({ match, onClose, onUnseal }) => {
 
   useEffect(() => {
     // FOR TESTING Load from local
-    const storedWeirdThings = JSON.parse(localStorage.getItem('userWeirdThings') || '[]');
-    setWeirdThings(storedWeirdThings);
+    const storedPreferences = JSON.parse(localStorage.getItem('userPreferences') || '[]');
+    setWeirdThings(storedPreferences.map(pref => PREFERENCE_OPTIONS[Number(pref)]?.label || 'Unknown'));
   }, []);
   // END TESTING
 

@@ -2,7 +2,8 @@ import { ethers } from 'ethers';
 import { FhenixClient, getPermit, EncryptionTypes } from 'fhenixjs';
 import CONTRACT_ABI from '../utils/abi.json';
 
-const CONTRACT_ADDRESS = "0x610f8673212a39Bd10a54a3773d65626303BBcdB";//eros1
+// const CONTRACT_ADDRESS = "0x610f8673212a39Bd10a54a3773d65626303BBcdB";//eros1
+const CONTRACT_ADDRESS = "0x90AAB0CC76E736F8F9b9Fde97B5B6BDd9970a39B";//eros2
 
 // setup contract interaction
 export const setupContractInteraction = async () => {
@@ -39,26 +40,27 @@ export const checkExistingProfile = async () => {
   }
 };
 
-export const setUserProfile = async (age, gender, location, genderPreference) => {
+export const setUserProfile = async (age, gender, location, genderPreference, statusCallback) => {
   const { contract, fhenixClient } = await setupContractInteraction();
 
   try {
-    console.log('Raw input data:', { age, gender, location, genderPreference });
-
+    statusCallback('encrypting');
     const encryptedAge = await fhenixClient.encrypt(Number(age), EncryptionTypes.uint8);
     const encryptedGender = await fhenixClient.encrypt(Number(gender), EncryptionTypes.uint8);
     const encryptedLocation = await fhenixClient.encrypt(Number(location), EncryptionTypes.uint8);
     const encryptedGenderPreference = await fhenixClient.encrypt(Number(genderPreference), EncryptionTypes.uint8);
 
-    console.log('Encrypted data:', { encryptedAge, encryptedGender, encryptedLocation, encryptedGenderPreference });
-
+    statusCallback('sending');
     const tx = await contract.setProfile(encryptedAge, encryptedLocation, encryptedGender, encryptedGenderPreference);
+    
+    statusCallback('confirming');
     await tx.wait();
     
-    console.log('Profile set successfully');
+    statusCallback('completed');
     return true;
   } catch (error) {
     console.error('Error setting user profile:', error);
+    statusCallback('error');
     return false;
   }
 };

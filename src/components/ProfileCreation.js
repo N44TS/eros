@@ -24,6 +24,19 @@ const GENDER_PREFERENCE_OPTIONS = [
   { value: '2', label: 'Both' }
 ];
 
+const PREFERENCE_OPTIONS = [
+  { value: '0', label: 'Harry Potter' },
+  { value: '1', label: 'into Crypto' },
+  { value: '2', label: 'Hate travelling' },
+  { value: '3', label: 'Vegetarian' },
+  { value: '4', label: 'Vaccinated' },
+  { value: '5', label: 'Hate reading' },
+  { value: '6', label: 'Politically left leaning' },
+  { value: '7', label: 'Politically right leaning' },
+  { value: '8', label: 'Hate fitness' },
+  { value: '9', label: 'Hate cooking' }
+];
+
 const ProfileCreation = ({ setProfileStep, setIsSubmitting, hasProfile, profileStep, isSubmitting, onProfileCreated }) => {
   const [age, setAge] = useState('');
   const [gender, setGender] = useState('');
@@ -35,9 +48,11 @@ const ProfileCreation = ({ setProfileStep, setIsSubmitting, hasProfile, profileS
   const [matches, setMatches] = useState([]);
   const [userAddress, setUserAddress] = useState('');
   const [formStep, setFormStep] = useState(1);
-  const [weirdThing1, setWeirdThing1] = useState('');
-  const [weirdThing2, setWeirdThing2] = useState('');
-  const [weirdThing3, setWeirdThing3] = useState('');
+  const [preference1, setPreference1] = useState('');
+  const [preference2, setPreference2] = useState('');
+  const [preference3, setPreference3] = useState('');
+  const [transactionStatus, setTransactionStatus] = useState('idle');
+  // 'idle', 'encrypting', 'sending', 'confirming', 'completed', 'error'
 
   useEffect(() => {
     const setupMatchListener = async () => {
@@ -109,40 +124,35 @@ const ProfileCreation = ({ setProfileStep, setIsSubmitting, hasProfile, profileS
   const handleSetProfile = async () => {
     console.log("ProfileCreation: Starting profile submission");
     setIsSubmitting(true);
+    setTransactionStatus('encrypting');
     try {
-      // FOR TESTING PURPOSES ONLY - SAVE WEIRD THINGS TO LOCAL STORAGE
-      localStorage.setItem('userWeirdThings', JSON.stringify([weirdThing1, weirdThing2, weirdThing3]));
+      // Save preferences to local storage
+      localStorage.setItem('userPreferences', JSON.stringify([preference1, preference2, preference3]));
 
-      //rest of the code 
       const genderValue = GENDER_OPTIONS.findIndex(option => option.value === gender);
       const locationValue = CONTINENT_OPTIONS.findIndex(option => option.value === location);
       const genderPrefValue = GENDER_PREFERENCE_OPTIONS.findIndex(option => option.value === genderPreference);
 
       console.log('Sending to contract:', { age, genderValue, locationValue, genderPrefValue });
 
-      setIsLoading(true);
-      try {
-        const success = await setUserProfile(age, genderValue, locationValue, genderPrefValue);
-        if (success) {
-          const userProfile = await getUserProfile();
-          setProfile(userProfile);
-          setProfileStep(2);
-          onProfileCreated(); 
-        } else {
-          setErrorMessage('Failed to set profile. Please try again.');
-        }
-      } catch (error) {
-        console.error('Error setting profile:', error);
-        setErrorMessage('An error occurred while setting your profile. Please try again.');
-      } finally {
-        console.log("ProfileCreation: Ending profile submission");
-        setIsSubmitting(false);
+      setTransactionStatus('sending');
+      const success = await setUserProfile(age, genderValue, locationValue, genderPrefValue, setTransactionStatus);
+      if (success) {
+        setTransactionStatus('completed');
+        const userProfile = await getUserProfile();
+        setProfile(userProfile);
+        setProfileStep(2);
+        onProfileCreated(); 
+      } else {
+        setTransactionStatus('error');
+        setErrorMessage('Failed to set profile. Please try again.');
       }
     } catch (error) {
       console.error('Error setting profile:', error);
+      setTransactionStatus('error');
       setErrorMessage('An error occurred while setting your profile. Please try again.');
     } finally {
-      setIsLoading(false);
+      console.log("ProfileCreation: Ending profile submission");
       setIsSubmitting(false);
     }
   };
@@ -193,7 +203,7 @@ const ProfileCreation = ({ setProfileStep, setIsSubmitting, hasProfile, profileS
 
   return (
     <div className="fhenix-container">
-      {!profile ? (
+      {!isSubmitting ? (
         <div className="fhenix-card">
           {formStep === 1 ? (
             <>
@@ -228,27 +238,36 @@ const ProfileCreation = ({ setProfileStep, setIsSubmitting, hasProfile, profileS
             </>
           ) : (
             <>
-              <input 
-                type="text" 
-                value={weirdThing1}
-                onChange={(e) => setWeirdThing1(e.target.value)}
-                placeholder="What's your weird thing?" 
-                className="fhenix-input"
-              />
-              <input 
-                type="text" 
-                value={weirdThing2}
-                onChange={(e) => setWeirdThing2(e.target.value)}
-                placeholder="What's your weird thing?" 
-                className="fhenix-input"
-              />
-              <input 
-                type="text" 
-                value={weirdThing3}
-                onChange={(e) => setWeirdThing3(e.target.value)}
-                placeholder="What's your weird thing?" 
-                className="fhenix-input"
-              />
+              <select 
+                value={preference1} 
+                onChange={(e) => setPreference1(e.target.value)}
+                className="fhenix-select"
+              >
+                <option value="">Select Preference 1</option>
+                {PREFERENCE_OPTIONS.map(({ value, label }) => (
+                  <option key={value} value={value}>{label}</option>
+                ))}
+              </select>
+              <select 
+                value={preference2} 
+                onChange={(e) => setPreference2(e.target.value)}
+                className="fhenix-select"
+              >
+                <option value="">Select Preference 2</option>
+                {PREFERENCE_OPTIONS.map(({ value, label }) => (
+                  <option key={value} value={value}>{label}</option>
+                ))}
+              </select>
+              <select 
+                value={preference3} 
+                onChange={(e) => setPreference3(e.target.value)}
+                className="fhenix-select"
+              >
+                <option value="">Select Preference 3</option>
+                {PREFERENCE_OPTIONS.map(({ value, label }) => (
+                  <option key={value} value={value}>{label}</option>
+                ))}
+              </select>
               <select 
                 value={genderPreference} 
                 onChange={(e) => setGenderPreference(e.target.value)}
@@ -259,17 +278,20 @@ const ProfileCreation = ({ setProfileStep, setIsSubmitting, hasProfile, profileS
                   <option key={value} value={value}>{label}</option>
                 ))}
               </select>
-              <button onClick={handleSetProfile} className="fhenix-button">Create Profile</button>
+              <button onClick={handleSetProfile} className="fhenix-button" disabled={isSubmitting}>
+                Create Profile
+              </button>
             </>
           )}
         </div>
       ) : (
-        <div className="fhenix-card">
-          <h2 className="fhenix-subtitle">Your Profile</h2>
-          <p>Age: {profile.age}</p>
-          <p>Gender: {GENDER_OPTIONS[Number(profile.gender)]?.label || 'Unknown'}</p>
-          <p>Location: {CONTINENT_OPTIONS[Number(profile.location)]?.label || 'Unknown'}</p>
-          <p>Gender Preference: {GENDER_PREFERENCE_OPTIONS[Number(profile.genderPreference)]?.label || 'Unknown'}</p>
+        <div className="transaction-status">
+          <div className="spinner"></div>
+          {transactionStatus === 'encrypting' && <p>Encrypting your data...</p>}
+          {transactionStatus === 'sending' && <p>Sending transaction to the blockchain...</p>}
+          {transactionStatus === 'confirming' && <p>Matching and Profile creation in progress... </p>}
+          {transactionStatus === 'completed' && <p>Matching and Profile created successfully!</p>}
+          {transactionStatus === 'error' && <p>Error: {errorMessage}</p>}
         </div>
       )}
     </div>

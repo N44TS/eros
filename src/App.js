@@ -21,7 +21,7 @@ function App() {
 
   const getHeaderText = () => {
     if (isSubmitting) {
-      return "looking for your perfect match";
+      return "looking for your perfect match....";
     }
     if (profileStep === 1) {
       return "hey you... just need the basics for now";
@@ -30,7 +30,8 @@ function App() {
       <>
         say something weird, no-one will know, not even us!
         <br />
-        <span className="subtext">please add your interests, hobbies, preferences, etc. All data is encrypted and kept completely private</span>
+        <span className="subtext"> add your interests, hobbies, preferences, etc. 
+          <br></br>All data is encrypted and kept completely private.</span>
       </>
     );
   };
